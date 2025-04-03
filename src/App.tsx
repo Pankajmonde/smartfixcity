@@ -9,6 +9,7 @@ import MapPage from "./pages/MapPage";
 import DashboardPage from "./pages/DashboardPage";
 import ReportPage from "./pages/ReportPage";
 import ReportDetailPage from "./pages/ReportDetailPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/report/:id" element={<ReportDetailPage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

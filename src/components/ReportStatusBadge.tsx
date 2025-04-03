@@ -11,7 +11,7 @@ const ReportStatusBadge = ({ status, className }: ReportStatusBadgeProps) => {
   const getStatusDetails = (status: ReportStatus) => {
     switch (status) {
       case 'pending':
-        return { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pending' };
+        return { color: 'bg-amber-100 text-amber-800 border-amber-200', label: 'Pending' };
       case 'investigating':
         return { color: 'bg-blue-100 text-blue-800 border-blue-200', label: 'Investigating' };
       case 'in_progress':
