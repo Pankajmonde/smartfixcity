@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { AlertTriangle, Menu, Map, LayoutDashboard, Plus, ShieldAlert } from 'lucide-react';
 import EmergencyButton from './EmergencyButton';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NavBarProps {
   onEmergencyClick?: () => void;
@@ -23,7 +22,7 @@ interface NavBarProps {
 
 const NavBar = ({ onEmergencyClick }: NavBarProps) => {
   const location = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
