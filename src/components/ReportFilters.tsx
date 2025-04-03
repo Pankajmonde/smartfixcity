@@ -20,8 +20,8 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
   const [priorityFilter, setPriorityFilter] = useState<PriorityLevel | undefined>(undefined);
   const [typeFilter, setTypeFilter] = useState<ReportType | undefined>(undefined);
   
-  const handleStatusChange = (value: ReportStatus | '') => {
-    const newValue = value === '' ? undefined : value;
+  const handleStatusChange = (value: string) => {
+    const newValue = value === 'all' ? undefined : value as ReportStatus;
     setStatusFilter(newValue);
     onFilterChange({
       status: newValue,
@@ -30,8 +30,8 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
     });
   };
   
-  const handlePriorityChange = (value: PriorityLevel | '') => {
-    const newValue = value === '' ? undefined : value;
+  const handlePriorityChange = (value: string) => {
+    const newValue = value === 'all' ? undefined : value as PriorityLevel;
     setPriorityFilter(newValue);
     onFilterChange({
       status: statusFilter,
@@ -40,8 +40,8 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
     });
   };
   
-  const handleTypeChange = (value: ReportType | '') => {
-    const newValue = value === '' ? undefined : value;
+  const handleTypeChange = (value: string) => {
+    const newValue = value === 'all' ? undefined : value as ReportType;
     setTypeFilter(newValue);
     onFilterChange({
       status: statusFilter,
@@ -64,14 +64,14 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
       <div className="flex flex-wrap gap-2 sm:gap-3">
         <div className="w-full sm:w-auto">
           <Select
-            value={statusFilter || ''}
-            onValueChange={(value) => handleStatusChange(value as ReportStatus | '')}
+            value={statusFilter || 'all'}
+            onValueChange={handleStatusChange}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="investigating">Investigating</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
@@ -82,14 +82,14 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
         
         <div className="w-full sm:w-auto">
           <Select
-            value={priorityFilter || ''}
-            onValueChange={(value) => handlePriorityChange(value as PriorityLevel | '')}
+            value={priorityFilter || 'all'}
+            onValueChange={handlePriorityChange}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Priorities</SelectItem>
+              <SelectItem value="all">All Priorities</SelectItem>
               <SelectItem value="high">High Priority</SelectItem>
               <SelectItem value="medium">Medium Priority</SelectItem>
               <SelectItem value="low">Low Priority</SelectItem>
@@ -99,14 +99,14 @@ const ReportFilters = ({ onFilterChange }: ReportFiltersProps) => {
         
         <div className="w-full sm:w-auto">
           <Select
-            value={typeFilter || ''}
-            onValueChange={(value) => handleTypeChange(value as ReportType | '')}
+            value={typeFilter || 'all'}
+            onValueChange={handleTypeChange}
           >
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="pothole">Pothole</SelectItem>
               <SelectItem value="water_leak">Water Leak</SelectItem>
               <SelectItem value="street_light">Street Light</SelectItem>
