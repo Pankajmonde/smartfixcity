@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Report } from '../types';
 import ReportTypeBadge from './ReportTypeBadge';
@@ -52,6 +52,17 @@ const createPriorityIcon = (priority: string, isEmergency: boolean = false) => {
   });
 };
 
+// Component to recenter map when reports change
+const MapRecenterer = ({ center }: { center: [number, number] }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  
+  return null;
+};
+
 interface ReportMapProps {
   reports: Report[];
   onMarkerClick?: (reportId: string) => void;
@@ -61,7 +72,9 @@ interface ReportMapProps {
 }
 
 const ReportMap = ({ reports, onMarkerClick, height = '600px', width = '100%', className = '' }: ReportMapProps) => {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Default to NYC
+  // Default to center of India
+  const defaultCenter: [number, number] = [20.5937, 78.9629];
+  const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
   
   // Calculate center of the map based on report locations
   useEffect(() => {
@@ -70,6 +83,9 @@ const ReportMap = ({ reports, onMarkerClick, height = '600px', width = '100%', c
       const totalLng = reports.reduce((sum, report) => sum + report.location.lng, 0);
       
       setMapCenter([totalLat / reports.length, totalLng / reports.length]);
+    } else {
+      // If no reports, default to India
+      setMapCenter(defaultCenter);
     }
   }, [reports]);
   
@@ -77,13 +93,15 @@ const ReportMap = ({ reports, onMarkerClick, height = '600px', width = '100%', c
     <div style={{ height, width }} className={className}>
       <MapContainer
         center={mapCenter}
-        zoom={13}
+        zoom={5}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        <MapRecenterer center={mapCenter} />
         
         {reports.map((report) => (
           <Marker

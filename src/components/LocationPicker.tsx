@@ -3,13 +3,25 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MapPin, Loader2 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { LatLng } from 'leaflet';
+import { toast } from 'sonner';
 
 interface LocationPickerProps {
   onLocationSelected: (location: { lat: number; lng: number; address?: string }) => void;
   initialLocation?: { lat: number; lng: number; address?: string };
 }
+
+// Component to recenter map when location changes
+const MapRecenterer = ({ position }: { position: [number, number] }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(position, map.getZoom());
+  }, [position, map]);
+  
+  return null;
+};
 
 // LocationMarker component to handle map interactions
 const LocationMarker = ({ position, onPositionChange }: { 
@@ -27,13 +39,18 @@ const LocationMarker = ({ position, onPositionChange }: {
 };
 
 const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerProps) => {
-  const [location, setLocation] = useState<{ lat: number; lng: number; address?: string }>({
-    lat: initialLocation?.lat || 40.7128, // Default to NYC
-    lng: initialLocation?.lng || -74.0060,
-    address: initialLocation?.address || '',
-  });
+  // Default to India location (center of India - near Nagpur)
+  const defaultLocation = {
+    lat: 20.5937,
+    lng: 78.9629,
+    address: initialLocation?.address || 'India',
+  };
+
+  const [location, setLocation] = useState<{ lat: number; lng: number; address?: string }>(
+    initialLocation || defaultLocation
+  );
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [addressInput, setAddressInput] = useState(initialLocation?.address || '');
+  const [addressInput, setAddressInput] = useState(initialLocation?.address || defaultLocation.address || '');
 
   // Update parent component when location changes
   useEffect(() => {
@@ -43,7 +60,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
   // Get current location using browser Geolocation API
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      console.error('Geolocation is not supported by your browser');
+      toast.error('Geolocation is not supported by your browser');
       return;
     }
 
@@ -56,25 +73,29 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
         let address = '';
         try {
           // In a real app, we would use a geocoding service like Google Maps or OpenStreetMap Nominatim
-          // For this demo, we'll just use a mock address
-          address = `Near ${Math.floor(Math.random() * 1000)} Main St`;
+          // For this demo, we'll just use a mock address based on coordinates
+          address = `Location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         } catch (error) {
           console.error('Error getting address:', error);
         }
         
-        setLocation({
+        const newLocation = {
           lat: latitude,
           lng: longitude,
           address,
-        });
+        };
+        
+        setLocation(newLocation);
         setAddressInput(address);
         setIsGettingLocation(false);
+        toast.success('Current location detected');
       },
       (error) => {
         console.error('Error getting location:', error);
+        toast.error(`Failed to get your location: ${error.message}`);
         setIsGettingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -83,7 +104,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
     setLocation({
       lat: latlng.lat,
       lng: latlng.lng,
-      address: location.address,
+      address: addressInput,
     });
   };
 
@@ -105,7 +126,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
       <div className="h-64 w-full rounded-md overflow-hidden">
         <MapContainer
           center={[location.lat, location.lng]}
-          zoom={13}
+          zoom={5}
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer
@@ -116,6 +137,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
             position={[location.lat, location.lng]} 
             onPositionChange={handleMarkerPositionChange} 
           />
+          <MapRecenterer position={[location.lat, location.lng]} />
         </MapContainer>
       </div>
       
