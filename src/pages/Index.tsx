@@ -137,7 +137,7 @@ const Index = () => {
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mr-3">
-                    <Road className="h-5 w-5" />
+                    <Route className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-semibold">Potholes</h3>
                 </div>
@@ -149,7 +149,7 @@ const Index = () => {
               <div className="bg-white p-6 rounded-lg shadow-sm border">
                 <div className="flex items-center mb-4">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mr-3">
-                    <Water className="h-5 w-5" />
+                    <Droplet className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-semibold">Water Leaks</h3>
                 </div>
