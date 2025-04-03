@@ -28,7 +28,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 // Create custom icons for different priority levels
 const createPriorityIcon = (priority: string, isEmergency: boolean = false) => {
   const iconUrl = markerIconUrl;
-  const iconSize = isEmergency ? [35, 45] : [25, 41];
+  const iconSize: [number, number] = isEmergency ? [35, 45] : [25, 41];
   
   return L.divIcon({
     className: 'custom-div-icon',
