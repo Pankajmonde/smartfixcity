@@ -6,23 +6,27 @@ import AdminReportTable from '@/components/AdminReportTable';
 import { Report, ReportStatus } from '@/types';
 import { fetchReports, updateReportStatus } from '@/lib/api';
 import { toast } from 'sonner';
-import { AlertTriangle, Loader2, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Loader2, LogOut, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ReportForm from '@/components/ReportForm';
 import { ReportFormData } from '@/types';
 import { submitReport } from '@/lib/api';
+import { useAdminAuth } from '@/hooks/use-admin-auth';
 
 const AdminDashboardPage = () => {
   const navigate = useNavigate();
+  const { isAdmin, isLoading: isAuthLoading, logout } = useAdminAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
-    loadReports();
-  }, []);
+    if (isAdmin) {
+      loadReports();
+    }
+  }, [isAdmin]);
   
   const loadReports = async () => {
     setIsLoading(true);
@@ -78,6 +82,21 @@ const AdminDashboardPage = () => {
   const handleViewDetails = (reportId: string) => {
     navigate(`/report/${reportId}`);
   };
+
+  // Show loading state while checking authentication
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-city-primary" />
+          <p className="text-muted-foreground">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If not authenticated, the useAdminAuth hook will redirect
+  if (!isAdmin) return null;
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -93,8 +112,14 @@ const AdminDashboardPage = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-amber-500" />
-              <span className="text-sm font-medium">Admin Access</span>
+              <div className="flex items-center gap-2 bg-amber-50 text-amber-800 px-3 py-1.5 rounded-md border border-amber-200">
+                <ShieldAlert className="h-5 w-5 text-amber-500" />
+                <span className="text-sm font-medium">Admin Access</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={logout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
           
@@ -127,6 +152,9 @@ const AdminDashboardPage = () => {
               <AlertTriangle className="h-5 w-5" />
               Emergency Report
             </DialogTitle>
+            <DialogDescription>
+              Submit an emergency report for immediate attention
+            </DialogDescription>
           </DialogHeader>
           
           <div className="max-h-[80vh] overflow-y-auto">

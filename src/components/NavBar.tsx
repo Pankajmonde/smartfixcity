@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,8 +25,26 @@ const NavBar = ({ onEmergencyClick }: NavBarProps) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
+
+  useEffect(() => {
+    // Check if user is admin
+    const checkAdmin = () => {
+      const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
+      setIsAdmin(isAuthenticated);
+    };
+
+    checkAdmin();
+    
+    // Listen for storage events to update admin status
+    window.addEventListener('storage', checkAdmin);
+    
+    return () => {
+      window.removeEventListener('storage', checkAdmin);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,12 +74,22 @@ const NavBar = ({ onEmergencyClick }: NavBarProps) => {
               Report Issue
             </Button>
           </Link>
-          <Link to="/admin">
-            <Button variant={isActive('/admin') ? 'secondary' : 'ghost'} size="sm">
-              <ShieldAlert className="h-4 w-4 mr-2" />
-              Admin
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant={isActive('/admin') ? 'secondary' : 'ghost'} size="sm">
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            </Link>
+          )}
+          {!isAdmin && (
+            <Link to="/admin-login">
+              <Button variant={isActive('/admin-login') ? 'secondary' : 'ghost'} size="sm">
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                Admin Login
+              </Button>
+            </Link>
+          )}
         </div>
         
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
@@ -99,12 +128,21 @@ const NavBar = ({ onEmergencyClick }: NavBarProps) => {
                         Report Issue
                       </Button>
                     </Link>
-                    <Link to="/admin" onClick={() => setIsOpen(false)}>
-                      <Button variant={isActive('/admin') ? 'secondary' : 'ghost'} className="w-full justify-start">
-                        <ShieldAlert className="h-4 w-4 mr-2" />
-                        Admin
-                      </Button>
-                    </Link>
+                    {isAdmin ? (
+                      <Link to="/admin" onClick={() => setIsOpen(false)}>
+                        <Button variant={isActive('/admin') ? 'secondary' : 'ghost'} className="w-full justify-start">
+                          <ShieldAlert className="h-4 w-4 mr-2" />
+                          Admin
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin-login" onClick={() => setIsOpen(false)}>
+                        <Button variant={isActive('/admin-login') ? 'secondary' : 'ghost'} className="w-full justify-start">
+                          <ShieldAlert className="h-4 w-4 mr-2" />
+                          Admin Login
+                        </Button>
+                      </Link>
+                    )}
                     
                     {onEmergencyClick && (
                       <Button 
