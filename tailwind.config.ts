@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Smart City specific colors
+				city: {
+					primary: '#1976D2', // Blue for trust
+					secondary: '#43A047', // Green for sustainability
+					accent: '#FFC107', // Amber for attention/warning
+					emergency: '#E53935', // Red for emergency
+					info: '#29B6F6', // Light blue for informational elements
+					success: '#66BB6A', // Green for success/completed tasks
+					neutral: '#78909C', // Blueish gray for neutral elements
+				},
+				priority: {
+					high: '#E53935', // Red for high priority
+					medium: '#FB8C00', // Orange for medium priority
+					low: '#43A047', // Green for low priority
 				}
 			},
 			borderRadius: {
@@ -84,11 +100,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-emergency': {
+					'0%, 100%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.05)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-emergency': 'pulse-emergency 2s infinite'
 			}
 		}
 	},
