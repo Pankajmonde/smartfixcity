@@ -2,7 +2,7 @@
 import { ReportType } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { 
-  MapPin, Water, Lightbulb, Graffiti, Trash2, Road, StopCircle, AlertTriangle, HelpCircle
+  MapPin, Droplet, Lightbulb, PenTool, Trash2, Route, StopCircle, AlertTriangle, HelpCircle
 } from 'lucide-react';
 
 interface ReportTypeBadgeProps {
@@ -18,13 +18,13 @@ const ReportTypeBadge = ({ type, className = '', showIcon = true }: ReportTypeBa
         return { 
           color: 'bg-amber-100 text-amber-800 border-amber-200', 
           label: 'Pothole',
-          icon: Road
+          icon: Route
         };
       case 'water_leak':
         return { 
           color: 'bg-blue-100 text-blue-800 border-blue-200', 
           label: 'Water Leak',
-          icon: Water
+          icon: Droplet
         };
       case 'street_light':
         return { 
@@ -36,7 +36,7 @@ const ReportTypeBadge = ({ type, className = '', showIcon = true }: ReportTypeBa
         return { 
           color: 'bg-purple-100 text-purple-800 border-purple-200', 
           label: 'Graffiti',
-          icon: Graffiti
+          icon: PenTool
         };
       case 'trash':
         return { 
@@ -48,7 +48,7 @@ const ReportTypeBadge = ({ type, className = '', showIcon = true }: ReportTypeBa
         return { 
           color: 'bg-slate-100 text-slate-800 border-slate-200', 
           label: 'Sidewalk',
-          icon: Road
+          icon: Route
         };
       case 'traffic_light':
         return { 

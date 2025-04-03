@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  MapPin, AlertTriangle, Lightbulb, Water, Road, BarChart, MapIcon
+  MapPin, AlertTriangle, Lightbulb, Droplet, Route, BarChart, MapIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NavBar from '@/components/NavBar';
