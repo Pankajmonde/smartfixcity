@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Message, Bot, AlertTriangle, X, Send, ChevronUp, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,6 @@ const SmartCityBot = () => {
   const navigate = useNavigate();
   const { isAdmin } = useAdminAuth();
 
-  // Initialize with welcome message
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMessage = {
@@ -47,7 +45,6 @@ const SmartCityBot = () => {
     }
   }, [messages.length]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       setTimeout(() => {
@@ -61,7 +58,6 @@ const SmartCityBot = () => {
     }
   }, [messages, isTyping]);
 
-  // Focus input when chat opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
       setTimeout(() => {
@@ -77,7 +73,6 @@ const SmartCityBot = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    // Add user message
     const newUserMessage = {
       id: generateId(),
       content: inputValue,
@@ -89,11 +84,9 @@ const SmartCityBot = () => {
     setInputValue('');
     setIsTyping(true);
 
-    // Process the message
     try {
       const response = await processMessage(inputValue);
       
-      // Add bot response after a small delay to simulate typing
       setTimeout(() => {
         setIsTyping(false);
         const botResponse = {
@@ -103,12 +96,11 @@ const SmartCityBot = () => {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, botResponse]);
-      }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+      }, 1000 + Math.random() * 1000);
     } catch (error) {
       console.error('Error processing message:', error);
       setIsTyping(false);
       
-      // Add error message
       const errorMessage = {
         id: generateId(),
         content: 'Sorry, I encountered an error processing your request. Please try again.',
@@ -128,7 +120,6 @@ const SmartCityBot = () => {
   const processMessage = async (message: string): Promise<string> => {
     const normalizedMessage = message.trim().toLowerCase();
     
-    // Help command
     if (normalizedMessage === 'help') {
       return `
 Here's what I can help you with:
@@ -156,7 +147,6 @@ Try one of these commands to get started!
       `;
     }
     
-    // FAQs
     if (normalizedMessage.includes('what is this project') || normalizedMessage.includes('about this project')) {
       return `
 CityFix is an AI-powered platform designed for Smart India Hackathon (SIH) that helps citizens report infrastructure issues in their city.
@@ -219,9 +209,11 @@ The platform is open to everyone who wants to contribute to making their city be
       `;
     }
     
-    // Report issue via chat
-    if (normalizedMessage.startsWith('report') || normalizedMessage.includes('there is a') || normalizedMessage.includes('there's a')) {
-      // Extract issue type from message
+    if (
+      normalizedMessage.startsWith('report') || 
+      normalizedMessage.includes('there is a') || 
+      normalizedMessage.includes("there's a")
+    ) {
       let type: ReportType = 'other';
       if (normalizedMessage.includes('pothole')) type = 'pothole';
       else if (normalizedMessage.includes('water leak') || normalizedMessage.includes('leak')) type = 'water_leak';
@@ -232,7 +224,6 @@ The platform is open to everyone who wants to contribute to making their city be
       else if (normalizedMessage.includes('traffic light')) type = 'traffic_light';
       else if (normalizedMessage.includes('emergency')) type = 'emergency';
       
-      // Check if we need more details or should redirect to form
       if (normalizedMessage.length < 15) {
         return `
 To report an issue, please provide more details or use our report form.
@@ -245,7 +236,6 @@ For example: "Report a pothole on Main Street near the library"
         `;
       }
       
-      // If message includes some location info, suggest going to the form
       return `
 Thanks for reporting this issue! To submit a complete report with photos and exact location, I recommend using our report form.
 
@@ -255,7 +245,6 @@ Based on your message, I've identified this as a ${type.replace('_', ' ')} issue
       `;
     }
     
-    // Navigate to report form
     if (normalizedMessage === 'yes' && messages[messages.length - 2]?.content.includes('report form')) {
       setTimeout(() => {
         navigate('/report');
@@ -264,9 +253,7 @@ Based on your message, I've identified this as a ${type.replace('_', ' ')} issue
       return 'Taking you to the report form now...';
     }
     
-    // Check status
     if (normalizedMessage.includes('status') && normalizedMessage.includes('report')) {
-      // Extract report ID
       const words = normalizedMessage.split(' ');
       const reportIdIndex = words.findIndex(word => word.includes('report-'));
       
@@ -309,9 +296,7 @@ ${report.status === 'resolved'
       }
     }
     
-    // Admin commands (only process if user is admin)
     if (isAdmin) {
-      // Show open reports
       if (normalizedMessage.includes('show') && 
           (normalizedMessage.includes('open reports') || normalizedMessage.includes('pending reports'))) {
         try {
@@ -339,21 +324,18 @@ ${openReports.length > 5 ? 'Visit the admin dashboard to see all reports.' : ''}
         }
       }
       
-      // Update report status
       if (normalizedMessage.includes('update report') && 
           (normalizedMessage.includes('to pending') || 
            normalizedMessage.includes('to investigating') || 
            normalizedMessage.includes('to in progress') || 
            normalizedMessage.includes('to resolved'))) {
         
-        // Extract report ID
         const words = normalizedMessage.split(' ');
         const reportIdIndex = words.findIndex(word => word.includes('report-'));
         
         if (reportIdIndex !== -1) {
           const reportId = words[reportIdIndex];
           
-          // Extract status
           let newStatus: ReportStatus = 'pending';
           if (normalizedMessage.includes('to investigating')) newStatus = 'investigating';
           else if (normalizedMessage.includes('to in progress') || normalizedMessage.includes('to in_progress')) newStatus = 'in_progress';
@@ -375,7 +357,6 @@ ${openReports.length > 5 ? 'Visit the admin dashboard to see all reports.' : ''}
       }
     }
     
-    // Suggest commands if input is unclear
     return `
 I'm not sure how to help with that. Here are some suggestions:
 
@@ -390,7 +371,6 @@ Or you can report an issue by typing something like "Report a pothole at Main St
 
   return (
     <>
-      {/* Floating chat button */}
       <div className="fixed right-5 bottom-5 z-50">
         <AnimatePresence>
           {!isOpen ? (
@@ -428,7 +408,6 @@ Or you can report an issue by typing something like "Report a pothole at Main St
         </AnimatePresence>
       </div>
 
-      {/* Chat modal */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -438,7 +417,6 @@ Or you can report an issue by typing something like "Report a pothole at Main St
             exit={{ y: 20, opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Chat header */}
             <div className="flex items-center justify-between p-4 bg-primary text-primary-foreground">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
@@ -454,7 +432,6 @@ Or you can report an issue by typing something like "Report a pothole at Main St
               </Button>
             </div>
 
-            {/* Chat messages */}
             <ScrollArea className="h-96 p-4" ref={scrollRef}>
               <div className="flex flex-col gap-3">
                 {messages.map((message) => (
@@ -521,7 +498,6 @@ Or you can report an issue by typing something like "Report a pothole at Main St
               </div>
             </ScrollArea>
 
-            {/* Chat input */}
             <div className="p-4 border-t">
               <div className="flex gap-2">
                 <Input
