@@ -92,7 +92,7 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
     setValue('location', location);
     
     // Check if this is a valid location (not the default)
-    const isValidLocation = location.lat !== 0 && location.lng !== L;
+    const isValidLocation = location.lat !== 0 && location.lng !== 0;
     setLocationSelected(isValidLocation);
     
     if (!isValidLocation) {
