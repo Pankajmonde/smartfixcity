@@ -5,7 +5,7 @@ import { addSampleReports, fetchReports, fetchReportById, fetchFilteredReports }
 // Initialize sample data
 addSampleReports();
 
-// These functions now just call the API functions that interact with MongoDB
+// These functions now just call the API functions that interact with our mock database
 export const getMockReportById = async (id: string): Promise<Report | undefined> => {
   const report = await fetchReportById(id);
   return report || undefined;

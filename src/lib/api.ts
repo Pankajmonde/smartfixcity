@@ -1,7 +1,5 @@
-
-import { ObjectId } from 'mongodb';
-import { reportsCollection } from './mongodb';
 import { Report, ReportFormData, PriorityLevel, ReportType, ReportStatus } from '../types';
+import { reportsCollection } from './mongodb';
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -39,7 +37,7 @@ const checkForDuplicateReports = async (
     const reports = await reportsCollection.find({
       status: { $ne: 'resolved' },
       type: newReport.type
-    }).toArray() as unknown as Report[];
+    }) as unknown as Report[];
     
     for (const report of reports) {
       // Calculate distance between reports
@@ -68,9 +66,9 @@ export const fetchReports = async (): Promise<Report[]> => {
   await delay(500); // Simulate network delay
   
   try {
-    const reportDocs = await reportsCollection.find().toArray();
+    const reportDocs = await reportsCollection.find();
     
-    // Convert MongoDB documents to Report objects
+    // Convert document format to Report objects
     const reports: Report[] = reportDocs.map(doc => ({
       id: doc._id.toString(),
       type: doc.type,
@@ -97,13 +95,13 @@ export const fetchReportById = async (id: string): Promise<Report | null> => {
   await delay(300);
   
   try {
-    const doc = await reportsCollection.findOne({ _id: new ObjectId(id) });
+    const doc = await reportsCollection.findOne({ _id: id });
     
     if (!doc) {
       return null;
     }
     
-    // Convert MongoDB document to Report object
+    // Convert document to Report object
     return {
       id: doc._id.toString(),
       type: doc.type,
@@ -138,9 +136,9 @@ export const fetchFilteredReports = async (
     if (priority) filter.priority = priority;
     if (type) filter.type = type;
     
-    const reportDocs = await reportsCollection.find(filter).toArray();
+    const reportDocs = await reportsCollection.find(filter);
     
-    // Convert MongoDB documents to Report objects
+    // Convert document format to Report objects
     const reports: Report[] = reportDocs.map(doc => ({
       id: doc._id.toString(),
       type: doc.type,
@@ -281,7 +279,7 @@ export const submitReport = async (reportData: ReportFormData): Promise<Report> 
   };
   
   try {
-    // Insert the report into MongoDB
+    // Insert the report
     const result = await reportsCollection.insertOne(newReport);
     
     // Return the new report with the generated ID
@@ -295,7 +293,7 @@ export const submitReport = async (reportData: ReportFormData): Promise<Report> 
   }
 };
 
-// Update report status in MongoDB
+// Update report status
 export const updateReportStatus = async (
   reportId: string, 
   status: ReportStatus
@@ -304,7 +302,7 @@ export const updateReportStatus = async (
   
   try {
     const result = await reportsCollection.findOneAndUpdate(
-      { _id: new ObjectId(reportId) },
+      { _id: reportId },
       { $set: { status, updatedAt: new Date().toISOString() } },
       { returnDocument: 'after' }
     );
@@ -313,7 +311,7 @@ export const updateReportStatus = async (
       throw new Error(`Report with ID ${reportId} not found`);
     }
     
-    // Convert MongoDB document to Report object
+    // Convert document to Report object
     return {
       id: result._id.toString(),
       type: result.type,
@@ -334,13 +332,13 @@ export const updateReportStatus = async (
   }
 };
 
-// Delete a report from MongoDB
+// Delete a report
 export const deleteReport = async (reportId: string): Promise<void> => {
   await delay(300);
   
   try {
     // Find the report to check its status
-    const report = await reportsCollection.findOne({ _id: new ObjectId(reportId) });
+    const report = await reportsCollection.findOne({ _id: reportId });
     
     if (!report) {
       throw new Error(`Report with ID ${reportId} not found`);
@@ -352,7 +350,7 @@ export const deleteReport = async (reportId: string): Promise<void> => {
     }
     
     // Delete the report
-    await reportsCollection.deleteOne({ _id: new ObjectId(reportId) });
+    await reportsCollection.deleteOne({ _id: reportId });
   } catch (error) {
     console.error('Error deleting report:', error);
     throw new Error('Failed to delete report');
