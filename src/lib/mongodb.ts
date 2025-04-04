@@ -158,30 +158,25 @@ class Database {
 // Mock MongoDB Client
 class MongoClient {
   private connected: boolean = false;
-  private db: Database;
+  private database: Database;
   
   constructor() {
-    this.db = new Database();
+    this.database = new Database();
   }
   
   async connect() {
     this.connected = true;
     console.log("Connected to mock MongoDB");
-    return true;
+    return this;
   }
   
   db(name: string) {
-    return this.db;
+    return this.database;
   }
 }
 
-// Create a mock client
+// Create a mock client instance
 const client = new MongoClient();
-
-// Database and collections
-const db = client.db("smart-city-app");
-const reportsCollection = db.collection("reports");
-const usersCollection = db.collection("users");
 
 // Connect to the mock database
 async function connectToMongoDB() {
@@ -195,7 +190,12 @@ async function connectToMongoDB() {
   }
 }
 
+// Initialize collections
+const database = client.db("smart-city-app");
+const reportsCollection = database.collection("reports");
+const usersCollection = database.collection("users");
+
 // Initialize connection when module is imported
 connectToMongoDB();
 
-export { client, db, reportsCollection, usersCollection };
+export { client, reportsCollection, usersCollection };
