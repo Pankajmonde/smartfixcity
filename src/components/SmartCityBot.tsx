@@ -1,5 +1,6 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Message, Bot, AlertTriangle, X, Send, ChevronUp, HelpCircle } from 'lucide-react';
+import { MessageSquare, Bot, AlertTriangle, X, Send, ChevronUp, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,7 +36,7 @@ const SmartCityBot = () => {
 
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeMessage = {
+      const welcomeMessage: MessageType = {
         id: generateId(),
         content: 'Welcome to CityFix! How can I help you today? Type "help" to see what I can do.',
         sender: 'bot',
@@ -73,7 +74,7 @@ const SmartCityBot = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const newUserMessage = {
+    const newUserMessage: MessageType = {
       id: generateId(),
       content: inputValue,
       sender: 'user',
@@ -89,7 +90,7 @@ const SmartCityBot = () => {
       
       setTimeout(() => {
         setIsTyping(false);
-        const botResponse = {
+        const botResponse: MessageType = {
           id: generateId(),
           content: response,
           sender: 'bot',
@@ -101,7 +102,7 @@ const SmartCityBot = () => {
       console.error('Error processing message:', error);
       setIsTyping(false);
       
-      const errorMessage = {
+      const errorMessage: MessageType = {
         id: generateId(),
         content: 'Sorry, I encountered an error processing your request. Please try again.',
         sender: 'bot',
@@ -385,7 +386,7 @@ Or you can report an issue by typing something like "Report a pothole at Main St
                 size="lg" 
                 className="rounded-full w-14 h-14 shadow-lg"
               >
-                <Message className="h-6 w-6" />
+                <MessageSquare className="h-6 w-6" />
               </Button>
             </motion.div>
           ) : (
