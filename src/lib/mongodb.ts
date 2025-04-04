@@ -150,7 +150,7 @@ class Collection {
 
 // Mock Database
 class Database {
-  collection(name: string) {
+  collection(name: string): Collection {
     return new Collection(name);
   }
 }
@@ -158,20 +158,20 @@ class Database {
 // Mock MongoDB Client
 class MongoClient {
   private connected: boolean = false;
-  private database: Database;
+  private db: Database;
   
   constructor() {
-    this.database = new Database();
+    this.db = new Database();
   }
   
-  async connect() {
+  async connect(): Promise<MongoClient> {
     this.connected = true;
     console.log("Connected to mock MongoDB");
     return this;
   }
   
-  db(name: string) {
-    return this.database;
+  database(name: string): Database {
+    return this.db;
   }
 }
 
@@ -179,7 +179,7 @@ class MongoClient {
 const client = new MongoClient();
 
 // Connect to the mock database
-async function connectToMongoDB() {
+async function connectToMongoDB(): Promise<boolean> {
   try {
     await client.connect();
     console.log("Connected to mock MongoDB in browser");
@@ -190,8 +190,8 @@ async function connectToMongoDB() {
   }
 }
 
-// Initialize collections
-const database = client.db("smart-city-app");
+// Initialize database and collections
+const database = client.database("smart-city-app");
 const reportsCollection = database.collection("reports");
 const usersCollection = database.collection("users");
 

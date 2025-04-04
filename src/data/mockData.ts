@@ -13,74 +13,79 @@ const addSampleReports = async () => {
     
     const sampleReports: Partial<Report>[] = [
       {
-        title: "Dangerous pothole on MG Road",
-        description: "Large pothole on MG Road near Apollo Hospital causing traffic delays and potential damage to vehicles.",
         type: "pothole",
+        description: "Large pothole on MG Road near Apollo Hospital causing traffic delays and potential damage to vehicles.",
+        location: {
+          lat: 12.9716, 
+          lng: 77.5946,
+          address: "MG Road, Bangalore"
+        },
         priority: "high",
-        status: "open",
-        location: "MG Road, Bangalore",
-        coordinates: { lat: 12.9716, lng: 77.5946 },
-        reporter: "Rajesh Kumar",
-        reporterContact: "rajesh.kumar@example.com",
-        dateReported: new Date().toISOString(),
-        upvotes: 15,
-        imageUrl: "/images/pothole.jpg"
+        status: "pending",
+        images: ["/images/pothole.jpg"],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        emergency: false
       },
       {
-        title: "Water leak at Nehru Place",
-        description: "Water pipe leakage at Nehru Place resulting in water wastage and road damage.",
         type: "water_leak",
+        description: "Water pipe leakage at Nehru Place resulting in water wastage and road damage.",
+        location: {
+          lat: 28.5483, 
+          lng: 77.2546,
+          address: "Nehru Place, Delhi"
+        },
         priority: "medium",
-        status: "in_progress",
-        location: "Nehru Place, Delhi",
-        coordinates: { lat: 28.5483, lng: 77.2546 },
-        reporter: "Priya Singh",
-        reporterContact: "priya.singh@example.com",
-        dateReported: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
-        upvotes: 7,
-        imageUrl: "/images/water-leak.jpg"
+        status: "investigating",
+        images: ["/images/water-leak.jpg"],
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
+        updatedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        emergency: false
       },
       {
-        title: "Street light not working in Bandra",
-        description: "Street light not working at Hill Road, Bandra causing safety concerns for residents in the evening.",
         type: "street_light",
+        description: "Street light not working at Hill Road, Bandra causing safety concerns for residents in the evening.",
+        location: {
+          lat: 19.0596, 
+          lng: 72.8295,
+          address: "Hill Road, Bandra, Mumbai"
+        },
         priority: "low",
-        status: "open",
-        location: "Hill Road, Bandra, Mumbai",
-        coordinates: { lat: 19.0596, lng: 72.8295 },
-        reporter: "Amit Patel",
-        reporterContact: "amit.patel@example.com",
-        dateReported: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
-        upvotes: 3,
-        imageUrl: "/images/street-light.jpg"
+        status: "pending",
+        images: ["/images/street-light.jpg"],
+        createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 days ago
+        updatedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+        emergency: false
       },
       {
-        title: "Garbage overflow in Koramangala",
-        description: "Overflowing garbage bins at 80 Feet Road, Koramangala creating unsanitary conditions and foul smell.",
         type: "trash",
+        description: "Overflowing garbage bins at 80 Feet Road, Koramangala creating unsanitary conditions and foul smell.",
+        location: {
+          lat: 12.9352, 
+          lng: 77.6245,
+          address: "80 Feet Road, Koramangala, Bangalore"
+        },
         priority: "medium",
-        status: "open",
-        location: "80 Feet Road, Koramangala, Bangalore",
-        coordinates: { lat: 12.9352, lng: 77.6245 },
-        reporter: "Deepa Nair",
-        reporterContact: "deepa.nair@example.com",
-        dateReported: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
-        upvotes: 9,
-        imageUrl: "/images/trash.jpg"
+        status: "pending",
+        images: ["/images/trash.jpg"],
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 days ago
+        updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        emergency: false
       },
       {
-        title: "Broken traffic signal near India Gate",
-        description: "Malfunctioning traffic signal at India Gate junction causing traffic congestion.",
         type: "traffic_light",
+        description: "Malfunctioning traffic signal at India Gate junction causing traffic congestion.",
+        location: {
+          lat: 28.6129, 
+          lng: 77.2295,
+          address: "India Gate, Delhi"
+        },
         priority: "high",
-        status: "open",
-        location: "India Gate, Delhi",
-        coordinates: { lat: 28.6129, lng: 77.2295 },
-        reporter: "Vikram Sharma",
-        reporterContact: "vikram.sharma@example.com",
-        dateReported: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
-        upvotes: 12,
-        imageUrl: "/images/traffic-light.jpg"
+        status: "pending",
+        images: ["/images/traffic-light.jpg"],
+        createdAt: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
+        updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+        emergency: true
       }
     ];
     
