@@ -1,4 +1,6 @@
 
+// NOTE: This file is kept for reference only. The application now uses MongoDB (see mongodb.ts)
+
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
