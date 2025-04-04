@@ -1,7 +1,6 @@
 
 import { Report, ReportType, PriorityLevel, ReportStatus } from '../types';
 import { reportsCollection } from '../lib/mongodb';
-import { fetchReports, fetchReportById, fetchFilteredReports } from '../lib/api';
 
 // Initialize sample data
 const addSampleReports = async () => {
@@ -99,8 +98,8 @@ addSampleReports();
 
 // These functions now just call the API functions that interact with our mock database
 export const getMockReportById = async (id: string): Promise<Report | undefined> => {
-  const report = await fetchReportById(id);
-  return report || undefined;
+  const report = await reportsCollection.findOne({ _id: id });
+  return report ? { ...report, id: report._id } : undefined;
 };
 
 export const getFilteredReports = async (
@@ -108,7 +107,14 @@ export const getFilteredReports = async (
   priority?: PriorityLevel,
   type?: ReportType
 ): Promise<Report[]> => {
-  return fetchFilteredReports(status, priority, type);
+  const query: Record<string, any> = {};
+  
+  if (status) query.status = status;
+  if (priority) query.priority = priority;
+  if (type) query.type = type;
+  
+  const reports = await reportsCollection.find(query);
+  return reports.map(report => ({ ...report, id: report._id }));
 };
 
 // Generate issue descriptions for India (kept for reference)

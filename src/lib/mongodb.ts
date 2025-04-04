@@ -158,10 +158,10 @@ class Database {
 // Mock MongoDB Client
 class MongoClient {
   private connected: boolean = false;
-  private db: Database;
+  private dbInstance: Database;
   
   constructor() {
-    this.db = new Database();
+    this.dbInstance = new Database();
   }
   
   async connect(): Promise<MongoClient> {
@@ -171,7 +171,7 @@ class MongoClient {
   }
   
   database(name: string): Database {
-    return this.db;
+    return this.dbInstance;
   }
 }
 
