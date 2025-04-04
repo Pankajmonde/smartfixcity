@@ -8,8 +8,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { ReportFormData, ReportType } from '../types';
 import ImageUpload from './ImageUpload';
@@ -27,8 +25,9 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [locationSelected, setLocationSelected] = useState(false);
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ReportFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors }, setError, clearErrors } = useForm<ReportFormData>({
     defaultValues: {
       type: isEmergency ? 'emergency' : 'pothole',
       description: '',
@@ -55,36 +54,84 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
     setSelectedImages(files);
     setValue('images', files);
     
-    // If at least one image is selected, run AI analysis
-    if (files.length > 0 && !isEmergency) {
-      setIsAnalyzing(true);
-      setAiSuggestion(null);
+    if (files.length === 0) {
+      setError('images', {
+        type: 'required',
+        message: 'At least one photo is required'
+      });
+    } else {
+      clearErrors('images');
       
-      try {
-        const analysis = await analyzeImage(files[0]);
+      // If at least one image is selected, run AI analysis
+      if (files.length > 0 && !isEmergency) {
+        setIsAnalyzing(true);
+        setAiSuggestion(null);
         
-        // If type is not already set to emergency, update it based on analysis
-        if (reportType !== 'emergency') {
-          setValue('type', analysis.suggestedType);
+        try {
+          const analysis = await analyzeImage(files[0]);
+          
+          // If type is not already set to emergency, update it based on analysis
+          if (reportType !== 'emergency') {
+            setValue('type', analysis.suggestedType);
+          }
+          
+          setAiSuggestion(
+            `AI suggests this is a ${analysis.suggestedType.replace('_', ' ')} issue with ${analysis.suggestedPriority} priority. ${analysis.description}`
+          );
+        } catch (error) {
+          console.error('Error analyzing image:', error);
+          toast.error('Failed to analyze image');
+        } finally {
+          setIsAnalyzing(false);
         }
-        
-        setAiSuggestion(
-          `AI suggests this is a ${analysis.suggestedType.replace('_', ' ')} issue with ${analysis.suggestedPriority} priority. ${analysis.description}`
-        );
-      } catch (error) {
-        console.error('Error analyzing image:', error);
-        toast.error('Failed to analyze image');
-      } finally {
-        setIsAnalyzing(false);
       }
     }
   };
 
   const handleLocationSelected = (location: { lat: number; lng: number; address?: string }) => {
     setValue('location', location);
+    
+    // Check if this is a valid location (not the default)
+    const isValidLocation = location.lat !== 0 && location.lng !== 0;
+    setLocationSelected(isValidLocation);
+    
+    if (!isValidLocation) {
+      setError('location', {
+        type: 'required',
+        message: 'Please select a location on the map'
+      });
+    } else {
+      clearErrors('location');
+    }
   };
 
   const handleFormSubmit = (data: ReportFormData) => {
+    let hasError = false;
+    
+    // Validate images (required field)
+    if (selectedImages.length === 0) {
+      setError('images', {
+        type: 'required',
+        message: 'At least one photo is required'
+      });
+      hasError = true;
+      toast.error('Please upload at least one photo');
+    }
+    
+    // Validate location (required field)
+    if (!locationSelected || (data.location.lat === 0 && data.location.lng === 0)) {
+      setError('location', {
+        type: 'required',
+        message: 'Please select a location on the map'
+      });
+      hasError = true;
+      toast.error('Please select a location on the map');
+    }
+    
+    if (hasError) {
+      return;
+    }
+    
     onSubmit(data);
   };
 
@@ -154,12 +201,15 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
         </div>
         
         <div>
-          <Label>Upload Photos</Label>
+          <Label>Upload Photos <span className="text-red-500">*</span></Label>
           <ImageUpload 
             onImagesSelected={handleImagesSelected}
             maxImages={3}
             existingImages={selectedImages}
           />
+          {errors.images && (
+            <p className="text-sm text-red-500 mt-1">{errors.images.message}</p>
+          )}
           
           {isAnalyzing && (
             <div className="mt-2 flex items-center text-sm text-muted-foreground">
@@ -176,8 +226,14 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
         </div>
         
         <div>
-          <Label>Location</Label>
-          <LocationPicker onLocationSelected={handleLocationSelected} />
+          <Label>Location <span className="text-red-500">*</span></Label>
+          <LocationPicker 
+            onLocationSelected={handleLocationSelected} 
+            required={true}
+          />
+          {errors.location && (
+            <p className="text-sm text-red-500 mt-1">{errors.location.message}</p>
+          )}
         </div>
       </div>
       

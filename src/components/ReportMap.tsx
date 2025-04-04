@@ -69,11 +69,19 @@ interface ReportMapProps {
   height?: string;
   width?: string;
   className?: string;
+  defaultCenter?: [number, number];
+  defaultZoom?: number;
 }
 
-const ReportMap = ({ reports, onMarkerClick, height = '600px', width = '100%', className = '' }: ReportMapProps) => {
-  // Default to center of India
-  const defaultCenter: [number, number] = [20.5937, 78.9629];
+const ReportMap = ({ 
+  reports, 
+  onMarkerClick, 
+  height = '600px', 
+  width = '100%', 
+  className = '',
+  defaultCenter = [20.5937, 78.9629], // Default to center of India
+  defaultZoom = 5
+}: ReportMapProps) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
   
   // Calculate center of the map based on report locations
@@ -84,16 +92,16 @@ const ReportMap = ({ reports, onMarkerClick, height = '600px', width = '100%', c
       
       setMapCenter([totalLat / reports.length, totalLng / reports.length]);
     } else {
-      // If no reports, default to India
+      // If no reports, default to provided center
       setMapCenter(defaultCenter);
     }
-  }, [reports]);
+  }, [reports, defaultCenter]);
   
   return (
     <div style={{ height, width }} className={className}>
       <MapContainer
         center={mapCenter}
-        zoom={5}
+        zoom={defaultZoom}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer

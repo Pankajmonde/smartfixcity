@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import NavBar from '@/components/NavBar';
 import AdminReportTable from '@/components/AdminReportTable';
 import { Report, ReportStatus } from '@/types';
-import { fetchReports, updateReportStatus } from '@/lib/api';
+import { fetchReports, updateReportStatus, deleteReport } from '@/lib/api';
 import { toast } from 'sonner';
-import { AlertTriangle, Loader2, LogOut, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Loader2, LogOut, ShieldAlert, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import ReportForm from '@/components/ReportForm';
 import { ReportFormData } from '@/types';
 import { submitReport } from '@/lib/api';
@@ -21,6 +22,8 @@ const AdminDashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   
   useEffect(() => {
     if (isAdmin) {
@@ -83,6 +86,37 @@ const AdminDashboardPage = () => {
     navigate(`/report/${reportId}`);
   };
 
+  const handleDeleteClick = (reportId: string) => {
+    const report = reports.find(r => r.id === reportId);
+    
+    // Only allow deleting pending reports
+    if (report && report.status !== 'pending') {
+      toast.error('Only pending reports can be deleted');
+      return;
+    }
+    
+    setReportToDelete(reportId);
+    setIsDeleteConfirmOpen(true);
+  };
+  
+  const handleDeleteConfirm = async () => {
+    if (!reportToDelete) return;
+    
+    try {
+      await deleteReport(reportToDelete);
+      
+      // Remove the report from local state
+      setReports(reports.filter(report => report.id !== reportToDelete));
+      
+      toast.success('Report deleted successfully');
+      setIsDeleteConfirmOpen(false);
+      setReportToDelete(null);
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error('Failed to delete report');
+    }
+  };
+
   // Show loading state while checking authentication
   if (isAuthLoading) {
     return (
@@ -139,6 +173,7 @@ const AdminDashboardPage = () => {
               reports={reports} 
               onStatusChange={handleStatusChange}
               onViewDetails={handleViewDetails}
+              onDeleteClick={handleDeleteClick}
             />
           )}
         </div>
@@ -166,6 +201,34 @@ const AdminDashboardPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Confirm Deletion
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this report? This action cannot be undone.
+              Only pending reports can be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setReportToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Report
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
