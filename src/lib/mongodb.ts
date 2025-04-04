@@ -1,7 +1,4 @@
 
-// This is a browser-compatible mock of MongoDB functionality
-// Real MongoDB connections should be done server-side
-
 import { Report } from '../types';
 
 // Mock collections using localStorage
@@ -183,6 +180,11 @@ async function connectToMongoDB(): Promise<boolean> {
   try {
     await client.connect();
     console.log("Connected to mock MongoDB in browser");
+    
+    // Log the connection string that would be used in a real server environment
+    console.log("In a server environment, you would connect to: mongodb+srv://projectpurpose1104:<db_password>@cluster0.8vyhpgc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+    console.log("Note: MongoDB Atlas connections must be done from a server environment, not directly from the browser");
+    
     return true;
   } catch (error) {
     console.error("Error connecting to mock MongoDB:", error);
