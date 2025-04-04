@@ -109,6 +109,8 @@ const MapPage = () => {
               onMarkerClick={handleMarkerClick}
               height="calc(100vh - 180px)"
               className="rounded-lg border"
+              defaultCenter={[20.5937, 78.9629]} // Center of India
+              defaultZoom={5}
             />
           )}
         </div>

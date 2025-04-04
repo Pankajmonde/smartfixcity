@@ -111,8 +111,17 @@ const getCoordinatesFromAddress = async (address: string): Promise<{ lat: number
   }
 };
 
+// Major Indian cities for the default locations
+const INDIA_CITIES = [
+  { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
+  { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
+  { name: 'Bengaluru', lat: 12.9716, lng: 77.5946 },
+  { name: 'Chennai', lat: 13.0827, lng: 80.2707 },
+  { name: 'Kolkata', lat: 22.5726, lng: 88.3639 }
+];
+
 const LocationPicker = ({ onLocationSelected, initialLocation, required = false }: LocationPickerProps) => {
-  // Default to India location (center of India - near Nagpur)
+  // Default to center of India (near Nagpur)
   const defaultLocation = {
     lat: 20.5937,
     lng: 78.9629,
@@ -174,20 +183,18 @@ const LocationPicker = ({ onLocationSelected, initialLocation, required = false 
         console.error('Error getting location:', error);
         let errorMessage = 'Failed to get your location';
         
-        switch(error.code) {
-          case 1:
-            errorMessage = 'Location access denied. Please enable location permissions in your browser.';
-            break;
-          case 2:
-            errorMessage = 'Location unavailable. Try entering your address manually.';
-            break;
-          case 3:
-            errorMessage = 'Location request timed out. Please try again or enter your address manually.';
-            break;
-        }
+        // Default to a random major Indian city
+        const randomCity = INDIA_CITIES[Math.floor(Math.random() * INDIA_CITIES.length)];
+        const fallbackLocation = {
+          lat: randomCity.lat,
+          lng: randomCity.lng,
+          address: `${randomCity.name}, India`
+        };
         
-        toast.error(errorMessage);
-        setLocationError(errorMessage);
+        setLocation(fallbackLocation);
+        setAddressInput(fallbackLocation.address);
+        
+        toast.warning(`Using ${randomCity.name} as fallback location. ${errorMessage}`);
         setIsGettingLocation(false);
       },
       { 
@@ -225,7 +232,12 @@ const LocationPicker = ({ onLocationSelected, initialLocation, required = false 
     setLocationError(null);
     
     try {
-      const coordinates = await getCoordinatesFromAddress(addressInput);
+      // Add "India" to search query if not already included
+      const searchQuery = addressInput.toLowerCase().includes('india') 
+        ? addressInput 
+        : `${addressInput}, India`;
+        
+      const coordinates = await getCoordinatesFromAddress(searchQuery);
       
       if (coordinates) {
         const address = await getAddressFromCoordinates(coordinates.lat, coordinates.lng);
@@ -260,6 +272,36 @@ const LocationPicker = ({ onLocationSelected, initialLocation, required = false 
 
   const handleSearchClick = () => {
     handleAddressSubmit();
+  };
+
+  // Quick city selection buttons
+  const handleCitySelect = async (city: { name: string, lat: number, lng: number }) => {
+    setIsSearchingAddress(true);
+    
+    try {
+      const address = await getAddressFromCoordinates(city.lat, city.lng);
+      
+      setLocation({
+        lat: city.lat,
+        lng: city.lng,
+        address,
+      });
+      
+      setAddressInput(address);
+      toast.success(`Location set to ${city.name}`);
+    } catch (error) {
+      console.error('Error setting city location:', error);
+      
+      setLocation({
+        lat: city.lat,
+        lng: city.lng,
+        address: `${city.name}, India`,
+      });
+      
+      setAddressInput(`${city.name}, India`);
+    } finally {
+      setIsSearchingAddress(false);
+    }
   };
 
   const isLocationValid = location.lat !== defaultLocation.lat || location.lng !== defaultLocation.lng;
@@ -310,6 +352,22 @@ const LocationPicker = ({ onLocationSelected, initialLocation, required = false 
             </Button>
           </div>
           
+          {/* Quick city selection */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {INDIA_CITIES.map((city) => (
+              <Button 
+                key={city.name}
+                variant="outline" 
+                size="sm"
+                type="button"
+                onClick={() => handleCitySelect(city)}
+                className="text-xs"
+              >
+                {city.name}
+              </Button>
+            ))}
+          </div>
+          
           <div className="flex items-center gap-2">
             <Button 
               type="button" 
@@ -336,7 +394,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation, required = false 
         </div>
         
         <div className="text-xs text-muted-foreground">
-          <p>Click on the map to select a specific location or use the buttons to search or get your current location.</p>
+          <p>Click on the map to select a specific location or use the quick city buttons to select a major Indian city.</p>
           {isLocationValid && (
             <p className="mt-1">
               <span className="font-semibold">Selected coordinates:</span> {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
