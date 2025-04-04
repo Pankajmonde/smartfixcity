@@ -12,6 +12,7 @@ import ReportDetailPage from "./pages/ReportDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFound from "./pages/NotFound";
+import SmartCityBot from "./components/SmartCityBot";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/admin-login" element={<AdminLoginPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <SmartCityBot />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

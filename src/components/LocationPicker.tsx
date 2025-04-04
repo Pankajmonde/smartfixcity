@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 interface LocationPickerProps {
   onLocationSelected: (location: { lat: number; lng: number; address?: string }) => void;
   initialLocation?: { lat: number; lng: number; address?: string };
+  required?: boolean;
 }
 
 // Component to recenter map when location changes
@@ -38,7 +39,37 @@ const LocationMarker = ({ position, onPositionChange }: {
   return position ? <Marker position={position} /> : null;
 };
 
-const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerProps) => {
+// Function to get address from coordinates using reverse geocoding
+const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          'Accept-Language': 'en',
+          'User-Agent': 'CityFix-App/1.0', // Best practice to identify your app
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch address');
+    }
+    
+    const data = await response.json();
+    
+    if (data.display_name) {
+      return data.display_name;
+    } else {
+      return `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+  } catch (error) {
+    console.error('Error fetching address:', error);
+    return `Location at ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+};
+
+const LocationPicker = ({ onLocationSelected, initialLocation, required = false }: LocationPickerProps) => {
   // Default to India location (center of India - near Nagpur)
   const defaultLocation = {
     lat: 20.5937,
@@ -51,6 +82,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
   );
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [addressInput, setAddressInput] = useState(initialLocation?.address || defaultLocation.address || '');
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Update parent component when location changes
   useEffect(() => {
@@ -70,14 +102,7 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
         const { latitude, longitude } = position.coords;
         
         // Try to get the address using reverse geocoding
-        let address = '';
-        try {
-          // In a real app, we would use a geocoding service like Google Maps or OpenStreetMap Nominatim
-          // For this demo, we'll just use a mock address based on coordinates
-          address = `Location at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-        } catch (error) {
-          console.error('Error getting address:', error);
-        }
+        const address = await getAddressFromCoordinates(latitude, longitude);
         
         const newLocation = {
           lat: latitude,
@@ -92,20 +117,38 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
       },
       (error) => {
         console.error('Error getting location:', error);
-        toast.error(`Failed to get your location: ${error.message}`);
+        let errorMessage = 'Failed to get your location';
+        
+        switch(error.code) {
+          case 1:
+            errorMessage = 'Location access denied. Please enable location permissions.';
+            break;
+          case 2:
+            errorMessage = 'Location unavailable. Please try again.';
+            break;
+          case 3:
+            errorMessage = 'Location request timed out. Please try again.';
+            break;
+        }
+        
+        toast.error(errorMessage);
         setIsGettingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   };
 
   // Update location when marker is moved
-  const handleMarkerPositionChange = (latlng: LatLng) => {
+  const handleMarkerPositionChange = async (latlng: LatLng) => {
+    const address = await getAddressFromCoordinates(latlng.lat, latlng.lng);
+    
     setLocation({
       lat: latlng.lat,
       lng: latlng.lng,
-      address: addressInput,
+      address,
     });
+    
+    setAddressInput(address);
   };
 
   // Update address input
@@ -123,11 +166,12 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
 
   return (
     <div className="w-full space-y-4">
-      <div className="h-64 w-full rounded-md overflow-hidden">
+      <div className="h-64 w-full rounded-md overflow-hidden border border-input">
         <MapContainer
           center={[location.lat, location.lng]}
           zoom={5}
           style={{ height: '100%', width: '100%' }}
+          whenReady={() => setMapLoaded(true)}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -170,6 +214,9 @@ const LocationPicker = ({ onLocationSelected, initialLocation }: LocationPickerP
           <p className="mt-1">
             <span className="font-semibold">Coordinates:</span> {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
           </p>
+          {required && location.lat === defaultLocation.lat && location.lng === defaultLocation.lng && (
+            <p className="text-xs text-red-500 mt-1">Please set a specific location for your report</p>
+          )}
         </div>
       </div>
     </div>

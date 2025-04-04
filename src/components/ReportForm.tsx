@@ -27,8 +27,9 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [locationSelected, setLocationSelected] = useState(false);
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ReportFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors }, setError, clearErrors } = useForm<ReportFormData>({
     defaultValues: {
       type: isEmergency ? 'emergency' : 'pothole',
       description: '',
@@ -54,6 +55,15 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
   const handleImagesSelected = async (files: File[]) => {
     setSelectedImages(files);
     setValue('images', files);
+    
+    if (files.length === 0) {
+      setError('images', {
+        type: 'required',
+        message: 'At least one photo is required'
+      });
+    } else {
+      clearErrors('images');
+    }
     
     // If at least one image is selected, run AI analysis
     if (files.length > 0 && !isEmergency) {
@@ -82,9 +92,35 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
 
   const handleLocationSelected = (location: { lat: number; lng: number; address?: string }) => {
     setValue('location', location);
+    setLocationSelected(true);
+    
+    if (location.lat === 0 && location.lng === 0) {
+      setLocationSelected(false);
+    }
   };
 
   const handleFormSubmit = (data: ReportFormData) => {
+    let hasError = false;
+    
+    // Validate images
+    if (selectedImages.length === 0) {
+      setError('images', {
+        type: 'required',
+        message: 'At least one photo is required'
+      });
+      hasError = true;
+    }
+    
+    // Validate location
+    if (!locationSelected || (data.location.lat === 0 && data.location.lng === 0)) {
+      toast.error('Please select a location on the map');
+      hasError = true;
+    }
+    
+    if (hasError) {
+      return;
+    }
+    
     onSubmit(data);
   };
 
@@ -154,12 +190,15 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
         </div>
         
         <div>
-          <Label>Upload Photos</Label>
+          <Label>Upload Photos <span className="text-red-500">*</span></Label>
           <ImageUpload 
             onImagesSelected={handleImagesSelected}
             maxImages={3}
             existingImages={selectedImages}
           />
+          {errors.images && (
+            <p className="text-sm text-red-500 mt-1">{errors.images.message}</p>
+          )}
           
           {isAnalyzing && (
             <div className="mt-2 flex items-center text-sm text-muted-foreground">
@@ -176,8 +215,14 @@ const ReportForm = ({ onSubmit, isSubmitting, isEmergency = false }: ReportFormP
         </div>
         
         <div>
-          <Label>Location</Label>
-          <LocationPicker onLocationSelected={handleLocationSelected} />
+          <Label>Location <span className="text-red-500">*</span></Label>
+          <LocationPicker 
+            onLocationSelected={handleLocationSelected} 
+            required={true}
+          />
+          {!locationSelected && (
+            <p className="text-sm text-red-500 mt-1">Please select a location on the map</p>
+          )}
         </div>
       </div>
       
