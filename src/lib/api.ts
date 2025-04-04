@@ -169,6 +169,8 @@ export const submitReport = async (reportData: ReportFormData): Promise<Report> 
   };
   
   // In a real app, we would send this to an API and get back the created report
+  mockReports.push(newReport);
+  
   return newReport;
 };
 
@@ -179,17 +181,19 @@ export const updateReportStatus = async (
 ): Promise<Report> => {
   await delay(800);
   
-  const report = getMockReportById(reportId);
-  if (!report) {
+  // Find the report in the mock data
+  const reportIndex = mockReports.findIndex(r => r.id === reportId);
+  
+  if (reportIndex === -1) {
     throw new Error(`Report with ID ${reportId} not found`);
   }
   
-  const updatedReport = {
-    ...report,
+  // Update the report status
+  mockReports[reportIndex] = {
+    ...mockReports[reportIndex],
     status,
     updatedAt: new Date().toISOString()
   };
   
-  // In a real app, we would update the report in the database
-  return updatedReport;
+  return mockReports[reportIndex];
 };

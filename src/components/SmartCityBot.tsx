@@ -1,522 +1,549 @@
 
 import { useState, useRef, useEffect } from 'react';
+import { Message, Bot, AlertTriangle, X, Send, ChevronUp, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AlertCircle, Bot, Send, User, X, HelpCircle, Sparkles } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar } from '@/components/ui/avatar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fetchReports, updateReportStatus, submitReport } from '@/lib/api';
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { fetchReportById, fetchFilteredReports, updateReportStatus } from '@/lib/api';
-import { Report, ReportType } from '@/types';
 import { toast } from 'sonner';
+import { ReportStatus, ReportFormData, ReportType } from '@/types';
 import { useAdminAuth } from '@/hooks/use-admin-auth';
 
-interface Message {
+type MessageType = {
   id: string;
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
-}
+};
 
-interface SuggestedAction {
-  label: string;
-  action: string;
-}
+const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
 
 const SmartCityBot = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [suggestedActions, setSuggestedActions] = useState<SuggestedAction[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { isAdmin } = useAdminAuth();
 
-  // Add initial welcome message
+  // Initialize with welcome message
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: `bot-${Date.now()}`,
-        content: "Hello! I'm SmartCityBot. How can I help you today? Type 'help' to see what I can do.",
+      const welcomeMessage = {
+        id: generateId(),
+        content: 'Welcome to CityFix! How can I help you today? Type "help" to see what I can do.',
         sender: 'bot',
-        timestamp: new Date(),
+        timestamp: new Date()
       };
       setMessages([welcomeMessage]);
-      setSuggestedActions([
-        { label: 'Help', action: 'help' },
-        { label: 'Report Issue', action: 'I want to report an issue' },
-        { label: 'Check Status', action: 'Check status of my report' },
-      ]);
     }
-  }, []);
+  }, [messages.length]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (scrollRef.current) {
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  }, [messages, isTyping]);
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus();
-      }, 100);
+      }, 300);
     }
   }, [isOpen]);
 
-  const addMessage = (content: string, sender: 'user' | 'bot') => {
-    const newMessage: Message = {
-      id: `${sender}-${Date.now()}`,
-      content,
-      sender,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, newMessage]);
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
   };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-    
-    const userMessage = inputValue.trim();
-    addMessage(userMessage, 'user');
+
+    // Add user message
+    const newUserMessage = {
+      id: generateId(),
+      content: inputValue,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, newUserMessage]);
     setInputValue('');
-    setIsProcessing(true);
-    setSuggestedActions([]);
-    
+    setIsTyping(true);
+
+    // Process the message
     try {
-      await processUserMessage(userMessage);
+      const response = await processMessage(inputValue);
+      
+      // Add bot response after a small delay to simulate typing
+      setTimeout(() => {
+        setIsTyping(false);
+        const botResponse = {
+          id: generateId(),
+          content: response,
+          sender: 'bot',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botResponse]);
+      }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
     } catch (error) {
       console.error('Error processing message:', error);
-      addMessage("I'm sorry, I encountered an error. Please try again.", 'bot');
-    } finally {
-      setIsProcessing(false);
+      setIsTyping(false);
+      
+      // Add error message
+      const errorMessage = {
+        id: generateId(),
+        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
-  const processUserMessage = async (message: string) => {
-    const lowerMessage = message.toLowerCase();
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  const processMessage = async (message: string): Promise<string> => {
+    const normalizedMessage = message.trim().toLowerCase();
     
     // Help command
-    if (lowerMessage === 'help') {
-      handleHelpCommand();
-      return;
+    if (normalizedMessage === 'help') {
+      return `
+Here's what I can help you with:
+
+📋 **Report an Issue**
+- Type: "Report a [issue type] at [location]"
+- Example: "Report a pothole at MG Road"
+
+📊 **Check Status**
+- Type: "Check status of report [ID]"
+- Example: "Check status of report report-123"
+
+${isAdmin ? `⚙️ **Admin Commands** (Admin Only)
+- "Show all open reports"
+- "Update report [ID] to [status]"
+- Example: "Update report report-123 to in_progress"` : ''}
+
+❓ **FAQs**
+- "What is this project?"
+- "How do I report an issue?"
+- "What's the status process?"
+- "Who can use this app?"
+
+Try one of these commands to get started!
+      `;
     }
     
-    // Check status command
-    if (lowerMessage.includes('status') && lowerMessage.includes('id')) {
-      const matches = lowerMessage.match(/id\s*(\d+)/i);
-      if (matches && matches[1]) {
-        await handleStatusCheck(matches[1]);
-        return;
-      }
+    // FAQs
+    if (normalizedMessage.includes('what is this project') || normalizedMessage.includes('about this project')) {
+      return `
+CityFix is an AI-powered platform designed for Smart India Hackathon (SIH) that helps citizens report infrastructure issues in their city.
+
+Our platform uses artificial intelligence to categorize and prioritize issues, making it easier for authorities to address them efficiently. Citizens can report problems like potholes, water leaks, broken streetlights, and more, with the option to upload photos and mark the exact location on a map.
+
+By connecting citizens directly with local authorities, we aim to make cities more responsive and livable for everyone.
+      `;
     }
     
-    // Report issue command
-    if (lowerMessage.includes('report') || 
-        lowerMessage.includes('pothole') || 
-        lowerMessage.includes('water leak') || 
-        lowerMessage.includes('light') || 
-        lowerMessage.includes('trash') || 
-        lowerMessage.includes('graffiti')) {
-      handleReportIssue(message);
-      return;
+    if (normalizedMessage.includes('how do i report') || normalizedMessage.includes('how to report')) {
+      return `
+You can report an issue in two ways:
+
+1. **Through the Web Interface:**
+   - Click on "Report" in the navigation menu
+   - Fill out the form with details about the issue
+   - Upload photos of the problem
+   - Mark the location on the map
+   - Submit your report
+
+2. **Through this Chat:**
+   - Type "Report a [issue type] at [location]"
+   - Example: "Report a pothole at MG Road"
+   - I'll ask you for any additional details needed
+
+Your report will be submitted to the appropriate authorities for review and action.
+      `;
     }
     
-    // Admin commands (only if user is admin)
-    if (isAdmin) {
-      // Show open reports
-      if (lowerMessage.includes('show') && 
-          (lowerMessage.includes('open') || lowerMessage.includes('pending'))) {
-        await handleShowOpenReports();
-        return;
+    if (normalizedMessage.includes('status process') || normalizedMessage.includes('how does status work')) {
+      return `
+When you submit a report, it goes through these status stages:
+
+1. **Pending**: Your report has been received and is awaiting review
+2. **Investigating**: Authorities are assessing the issue
+3. **In Progress**: Work has begun to fix the reported problem
+4. **Resolved**: The issue has been fixed
+
+You can check the status of your report anytime by:
+- Visiting the Dashboard page
+- Using this chat bot (type "Check status of report [ID]")
+- Checking your email for notifications (if provided)
+
+Each status update is timestamped so you can track progress.
+      `;
+    }
+    
+    if (normalizedMessage.includes('who can use this') || normalizedMessage.includes('who is this for')) {
+      return `
+CityFix is designed for:
+
+**Citizens**: Anyone can report infrastructure issues in their city, check status of reports, and see what issues have been reported and resolved in their area.
+
+**Municipal Authorities**: City officials can access an administrative dashboard to manage reports, update statuses, and prioritize work.
+
+**Visitors**: Even visitors to the city can report issues they notice.
+
+The platform is open to everyone who wants to contribute to making their city better. No registration is required to submit a report, although providing contact information helps authorities follow up if needed.
+      `;
+    }
+    
+    // Report issue via chat
+    if (normalizedMessage.startsWith('report') || normalizedMessage.includes('there is a') || normalizedMessage.includes('there's a')) {
+      // Extract issue type from message
+      let type: ReportType = 'other';
+      if (normalizedMessage.includes('pothole')) type = 'pothole';
+      else if (normalizedMessage.includes('water leak') || normalizedMessage.includes('leak')) type = 'water_leak';
+      else if (normalizedMessage.includes('street light') || normalizedMessage.includes('streetlight')) type = 'street_light';
+      else if (normalizedMessage.includes('graffiti')) type = 'graffiti';
+      else if (normalizedMessage.includes('trash') || normalizedMessage.includes('garbage')) type = 'trash';
+      else if (normalizedMessage.includes('sidewalk')) type = 'sidewalk';
+      else if (normalizedMessage.includes('traffic light')) type = 'traffic_light';
+      else if (normalizedMessage.includes('emergency')) type = 'emergency';
+      
+      // Check if we need more details or should redirect to form
+      if (normalizedMessage.length < 15) {
+        return `
+To report an issue, please provide more details or use our report form.
+
+Would you like me to:
+1. Direct you to the full report form where you can upload photos and mark the exact location?
+2. Continue reporting through chat? (Please provide more details about the issue and location)
+
+For example: "Report a pothole on Main Street near the library"
+        `;
       }
       
-      // Mark report as done/resolved
-      if (lowerMessage.includes('mark') && 
-          lowerMessage.includes('id') && 
-          (lowerMessage.includes('done') || lowerMessage.includes('resolved'))) {
-        const matches = lowerMessage.match(/id\s*(\d+)/i);
-        if (matches && matches[1]) {
-          await handleMarkAsResolved(matches[1]);
-          return;
+      // If message includes some location info, suggest going to the form
+      return `
+Thanks for reporting this issue! To submit a complete report with photos and exact location, I recommend using our report form.
+
+Would you like me to take you to the report form? Reply with "Yes" to go to the form or "No" to continue in chat.
+
+Based on your message, I've identified this as a ${type.replace('_', ' ')} issue.
+      `;
+    }
+    
+    // Navigate to report form
+    if (normalizedMessage === 'yes' && messages[messages.length - 2]?.content.includes('report form')) {
+      setTimeout(() => {
+        navigate('/report');
+      }, 500);
+      
+      return 'Taking you to the report form now...';
+    }
+    
+    // Check status
+    if (normalizedMessage.includes('status') && normalizedMessage.includes('report')) {
+      // Extract report ID
+      const words = normalizedMessage.split(' ');
+      const reportIdIndex = words.findIndex(word => word.includes('report-'));
+      
+      if (reportIdIndex !== -1) {
+        const reportId = words[reportIdIndex];
+        
+        try {
+          const reports = await fetchReports();
+          const report = reports.find(r => r.id === reportId);
+          
+          if (report) {
+            const reportDate = new Date(report.createdAt);
+            const lastUpdated = new Date(report.updatedAt);
+            
+            return `
+**Report ${reportId}**
+Status: ${report.status.replace('_', ' ')}
+Type: ${report.type.replace('_', ' ')}
+Location: ${report.location.address}
+Reported: ${format(reportDate, 'PPP')}
+Last updated: ${format(lastUpdated, 'PPP')}
+
+${report.status === 'resolved' 
+  ? '✅ This issue has been resolved.' 
+  : report.status === 'in_progress' 
+    ? '🔧 Work is in progress on this issue.' 
+    : report.status === 'investigating' 
+      ? '🔍 Authorities are investigating this issue.' 
+      : '⏳ This report is pending review.'}
+            `;
+          } else {
+            return `I couldn't find a report with ID ${reportId}. Please check the ID and try again.`;
+          }
+        } catch (error) {
+          console.error('Error fetching report status:', error);
+          return 'Sorry, I encountered an error retrieving the report status. Please try again later.';
+        }
+      } else {
+        return 'Please provide a valid report ID. For example: "Check status of report report-123"';
+      }
+    }
+    
+    // Admin commands (only process if user is admin)
+    if (isAdmin) {
+      // Show open reports
+      if (normalizedMessage.includes('show') && 
+          (normalizedMessage.includes('open reports') || normalizedMessage.includes('pending reports'))) {
+        try {
+          const reports = await fetchReports();
+          const openReports = reports.filter(r => r.status !== 'resolved');
+          
+          if (openReports.length === 0) {
+            return 'There are currently no open reports. All issues have been resolved.';
+          }
+          
+          const reportsText = openReports.slice(0, 5).map(report => 
+            `- ${report.id}: ${report.type.replace('_', ' ')} at ${report.location.address} (${report.status.replace('_', ' ')})`
+          ).join('\n');
+          
+          return `
+Here are the most recent open reports (showing ${Math.min(5, openReports.length)} of ${openReports.length}):
+
+${reportsText}
+
+${openReports.length > 5 ? 'Visit the admin dashboard to see all reports.' : ''}
+          `;
+        } catch (error) {
+          console.error('Error fetching open reports:', error);
+          return 'Sorry, I encountered an error retrieving open reports. Please try again later.';
+        }
+      }
+      
+      // Update report status
+      if (normalizedMessage.includes('update report') && 
+          (normalizedMessage.includes('to pending') || 
+           normalizedMessage.includes('to investigating') || 
+           normalizedMessage.includes('to in progress') || 
+           normalizedMessage.includes('to resolved'))) {
+        
+        // Extract report ID
+        const words = normalizedMessage.split(' ');
+        const reportIdIndex = words.findIndex(word => word.includes('report-'));
+        
+        if (reportIdIndex !== -1) {
+          const reportId = words[reportIdIndex];
+          
+          // Extract status
+          let newStatus: ReportStatus = 'pending';
+          if (normalizedMessage.includes('to investigating')) newStatus = 'investigating';
+          else if (normalizedMessage.includes('to in progress') || normalizedMessage.includes('to in_progress')) newStatus = 'in_progress';
+          else if (normalizedMessage.includes('to resolved')) newStatus = 'resolved';
+          
+          try {
+            await updateReportStatus(reportId, newStatus);
+            
+            toast.success(`Report ${reportId} updated to ${newStatus.replace('_', ' ')}`);
+            
+            return `I've updated report ${reportId} to status: ${newStatus.replace('_', ' ')}`;
+          } catch (error) {
+            console.error('Error updating report status:', error);
+            return 'Sorry, I encountered an error updating the report status. Please try again later.';
+          }
+        } else {
+          return 'Please provide a valid report ID. For example: "Update report report-123 to resolved"';
         }
       }
     }
     
-    // FAQ handling
-    if (handleFAQ(lowerMessage)) {
-      return;
-    }
-    
-    // Unknown command
-    addMessage("I'm not sure what you're asking. Here are some suggestions:", 'bot');
-    setSuggestedActions([
-      { label: 'Help', action: 'help' },
-      { label: 'Report Issue', action: 'I want to report an issue' },
-      { label: 'Check Status', action: 'Check status of my report' }
-    ]);
-  };
+    // Suggest commands if input is unclear
+    return `
+I'm not sure how to help with that. Here are some suggestions:
 
-  const handleHelpCommand = () => {
-    let helpMessage = `
-Here's what I can help you with:
+- Type "help" to see all available commands
+- Type "What is this project?" to learn about CityFix
+- Type "How do I report an issue?" for reporting instructions
+${isAdmin ? '- Type "Show open reports" to see pending issues' : ''}
 
-1. **Report Issues**: Tell me about problems like "There's a pothole on MG Road" or "The streetlight is broken near City Park"
-
-2. **Check Status**: Ask "What's the status of ID 12?" to check on a report
-
-3. **FAQs**:
-   - "What is this project?"
-   - "How do I report an issue?"
-   - "What's the status process?"
-   - "Who can use this app?"`;
-
-    if (isAdmin) {
-      helpMessage += `\n\n4. **Admin Commands**:
-   - "Show open reports"
-   - "Mark ID 12 as resolved"`;
-    }
-
-    addMessage(helpMessage, 'bot');
-    
-    setSuggestedActions([
-      { label: 'Report Issue', action: 'I want to report an issue' },
-      { label: 'Check Status', action: 'Check status of my report' },
-      { label: 'What is this project?', action: 'What is this project?' }
-    ]);
-  };
-
-  const handleStatusCheck = async (reportId: string) => {
-    try {
-      const report = await fetchReportById(`report-${reportId}`);
-      
-      if (!report) {
-        addMessage(`I couldn't find any report with ID ${reportId}. Please check the ID and try again.`, 'bot');
-        return;
-      }
-      
-      const reportUrl = `/report/report-${reportId}`;
-      const statusMessage = `
-Report ID: ${reportId}
-Type: ${report.type.replace('_', ' ')}
-Status: ${report.status.replace('_', ' ')}
-Priority: ${report.priority}
-Reported on: ${new Date(report.createdAt).toLocaleDateString()}
-
-You can view the full details here: [Report Details](/report/report-${reportId})`;
-
-      addMessage(statusMessage, 'bot');
-      
-      setSuggestedActions([
-        { label: 'View Details', action: `navigate:${reportUrl}` }
-      ]);
-    } catch (error) {
-      console.error('Error fetching report:', error);
-      addMessage('Sorry, I encountered an error while checking the status. Please try again later.', 'bot');
-    }
-  };
-
-  const handleReportIssue = (message: string) => {
-    // Try to detect issue type
-    let detectedType: ReportType = 'other';
-    
-    if (message.toLowerCase().includes('pothole')) {
-      detectedType = 'pothole';
-    } else if (message.toLowerCase().includes('water') || message.toLowerCase().includes('leak')) {
-      detectedType = 'water_leak';
-    } else if (message.toLowerCase().includes('street light') || message.toLowerCase().includes('streetlight')) {
-      detectedType = 'street_light';
-    } else if (message.toLowerCase().includes('graffiti')) {
-      detectedType = 'graffiti';
-    } else if (message.toLowerCase().includes('trash') || message.toLowerCase().includes('garbage')) {
-      detectedType = 'trash';
-    } else if (message.toLowerCase().includes('sidewalk')) {
-      detectedType = 'sidewalk';
-    } else if (message.toLowerCase().includes('traffic light')) {
-      detectedType = 'traffic_light';
-    } else if (message.toLowerCase().includes('emergency')) {
-      detectedType = 'emergency';
-    }
-    
-    const responseMessage = `I understand you want to report a ${detectedType.replace('_', ' ')} issue. 
-    
-Would you like to submit a detailed report with photos and location? Click the button below to go to the report form.`;
-    
-    addMessage(responseMessage, 'bot');
-    
-    setSuggestedActions([
-      { label: 'Go to Report Form', action: 'navigate:/report' }
-    ]);
-  };
-
-  const handleShowOpenReports = async () => {
-    if (!isAdmin) {
-      addMessage('Sorry, only administrators can access this feature.', 'bot');
-      return;
-    }
-    
-    try {
-      const openReports = await fetchFilteredReports('pending');
-      
-      if (openReports.length === 0) {
-        addMessage('There are currently no open reports.', 'bot');
-        return;
-      }
-      
-      let responseMessage = `There are ${openReports.length} open reports:\n\n`;
-      
-      openReports.slice(0, 5).forEach(report => {
-        const reportId = report.id.replace('report-', '');
-        responseMessage += `ID ${reportId}: ${report.type.replace('_', ' ')} - ${report.priority} priority - ${new Date(report.createdAt).toLocaleDateString()}\n`;
-      });
-      
-      if (openReports.length > 5) {
-        responseMessage += `\n...and ${openReports.length - 5} more reports.`;
-      }
-      
-      responseMessage += '\n\nYou can view all reports in the admin dashboard.';
-      
-      addMessage(responseMessage, 'bot');
-      
-      setSuggestedActions([
-        { label: 'Go to Admin Dashboard', action: 'navigate:/admin' }
-      ]);
-    } catch (error) {
-      console.error('Error fetching open reports:', error);
-      addMessage('Sorry, I encountered an error while fetching open reports. Please try again later.', 'bot');
-    }
-  };
-
-  const handleMarkAsResolved = async (reportId: string) => {
-    if (!isAdmin) {
-      addMessage('Sorry, only administrators can access this feature.', 'bot');
-      return;
-    }
-    
-    try {
-      const report = await updateReportStatus(`report-${reportId}`, 'resolved');
-      
-      if (!report) {
-        addMessage(`I couldn't find any report with ID ${reportId}. Please check the ID and try again.`, 'bot');
-        return;
-      }
-      
-      addMessage(`Report ID ${reportId} has been marked as resolved.`, 'bot');
-      
-      setSuggestedActions([
-        { label: 'View Report', action: `navigate:/report/report-${reportId}` },
-        { label: 'Admin Dashboard', action: 'navigate:/admin' }
-      ]);
-    } catch (error) {
-      console.error('Error updating report status:', error);
-      addMessage('Sorry, I encountered an error while updating the report. Please try again later.', 'bot');
-    }
-  };
-
-  const handleFAQ = (message: string): boolean => {
-    // What is this project?
-    if (message.includes('what is this') || message.includes('about this')) {
-      addMessage(`This is the SmartCity Fix Portal, an AI-powered solution for reporting and tracking urban infrastructure issues. 
-
-It allows citizens to report problems like potholes, water leaks, or street light outages using their smartphones. The system uses AI to analyze reports, detect duplicates, and prioritize urgent issues.
-
-This project was developed as part of the Smart India Hackathon (SIH) initiative to improve urban infrastructure management through technology.`, 'bot');
-      return true;
-    }
-    
-    // How do I report an issue?
-    if (message.includes('how') && message.includes('report')) {
-      addMessage(`To report an issue:
-
-1. Click on "Report" in the navigation menu
-2. Take or upload photos of the problem
-3. Choose the issue type (pothole, water leak, etc.)
-4. Mark the location on the map
-5. Add a description
-6. Submit your report
-
-You can also report by telling me about the issue directly here, and I'll guide you to the report form.`, 'bot');
-      
-      setSuggestedActions([
-        { label: 'Go to Report Form', action: 'navigate:/report' }
-      ]);
-      return true;
-    }
-    
-    // What's the status process?
-    if (message.includes('status') && message.includes('process')) {
-      addMessage(`The status process for reports follows these stages:
-
-1. **Pending**: Initial report submitted
-2. **Investigating**: Officials are assessing the report
-3. **In Progress**: Work has begun to fix the issue
-4. **Resolved**: The issue has been fixed
-
-You can check a report's status by asking me "What's the status of ID [number]?" or by visiting the report details page.`, 'bot');
-      return true;
-    }
-    
-    // Who can use this?
-    if (message.includes('who') && message.includes('use')) {
-      addMessage(`This application is designed for:
-
-1. **Citizens**: To report infrastructure issues in their neighborhoods
-2. **Municipal Staff**: To track and manage reported issues
-3. **Administrators**: To prioritize issues and coordinate responses
-
-Anyone with internet access can report issues and check on their status. Administrative functions are restricted to authorized personnel.`, 'bot');
-      return true;
-    }
-    
-    return false;
-  };
-
-  const handleSuggestedAction = (action: string) => {
-    if (action.startsWith('navigate:')) {
-      const url = action.replace('navigate:', '');
-      navigate(url);
-      setIsOpen(false);
-    } else {
-      setInputValue(action);
-      // Auto-send after a slight delay to show the user what was selected
-      setTimeout(() => {
-        handleSendMessage();
-      }, 300);
-    }
+Or you can report an issue by typing something like "Report a pothole at Main Street"
+    `;
   };
 
   return (
     <>
-      {/* Floating button */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 rounded-full w-14 h-14 flex items-center justify-center z-50 shadow-lg"
-        size="icon"
-      >
-        <Bot size={24} />
-      </Button>
-      
-      {/* Chat dialog */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6 md:p-12">
-          <Card className="w-full max-w-md h-[80vh] flex flex-col shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between py-3 border-b">
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5" />
-                <span>SmartCityBot</span>
-              </CardTitle>
+      {/* Floating chat button */}
+      <div className="fixed right-5 bottom-5 z-50">
+        <AnimatePresence>
+          {!isOpen ? (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', bounce: 0.5 }}
+            >
               <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsOpen(false)}
-                className="h-8 w-8"
+                onClick={toggleChat} 
+                size="lg" 
+                className="rounded-full w-14 h-14 shadow-lg"
+              >
+                <Message className="h-6 w-6" />
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-background border rounded-full shadow-lg p-2"
+            >
+              <Button
+                onClick={toggleChat}
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+              >
+                <ChevronUp className="h-5 w-5" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Chat modal */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed right-5 bottom-20 z-50 w-full max-w-md shadow-xl rounded-lg overflow-hidden border bg-background"
+            initial={{ y: 20, opacity: 0, height: 0 }}
+            animate={{ y: 0, opacity: 1, height: 'auto' }}
+            exit={{ y: 20, opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Chat header */}
+            <div className="flex items-center justify-between p-4 bg-primary text-primary-foreground">
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                <h3 className="font-semibold">CityFix Assistant</h3>
+              </div>
+              <Button
+                onClick={toggleChat}
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary/90"
               >
                 <X className="h-4 w-4" />
               </Button>
-            </CardHeader>
-            
-            <CardContent className="flex-1 overflow-auto p-4">
-              <div className="space-y-4">
-                {messages.map(message => (
+            </div>
+
+            {/* Chat messages */}
+            <ScrollArea className="h-96 p-4" ref={scrollRef}>
+              <div className="flex flex-col gap-3">
+                {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${
+                      message.sender === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
                   >
-                    <div className={`flex items-start gap-2 max-w-[80%] ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      <Avatar className={`h-8 w-8 ${message.sender === 'user' ? 'bg-primary' : 'bg-secondary'}`}>
-                        {message.sender === 'user' ? (
-                          <User className="h-4 w-4 text-primary-foreground" />
-                        ) : (
-                          <Bot className="h-4 w-4 text-secondary-foreground" />
-                        )}
-                        <AvatarFallback>
-                          {message.sender === 'user' ? 'U' : 'B'}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div
-                        className={`rounded-lg px-3 py-2 whitespace-pre-wrap ${
-                          message.sender === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        }`}
-                      >
+                    <motion.div
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className={`max-w-[85%] rounded-lg p-3 ${
+                        message.sender === 'user'
+                          ? 'bg-primary text-primary-foreground ml-auto'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {message.sender === 'bot' && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <Avatar className="h-6 w-6">
+                            <Bot className="h-4 w-4" />
+                          </Avatar>
+                          <span className="text-xs font-medium">CityFix Bot</span>
+                        </div>
+                      )}
+                      <div className="whitespace-pre-line text-sm">
                         {message.content}
                       </div>
-                    </div>
+                      <div
+                        className={`text-xs mt-1 ${
+                          message.sender === 'user'
+                            ? 'text-primary-foreground/70'
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        {format(message.timestamp, 'h:mm a')}
+                      </div>
+                    </motion.div>
                   </div>
                 ))}
-                
-                {isProcessing && (
+                {isTyping && (
                   <div className="flex justify-start">
-                    <div className="flex items-start gap-2 max-w-[80%]">
-                      <Avatar className="h-8 w-8 bg-secondary">
-                        <Bot className="h-4 w-4 text-secondary-foreground" />
-                        <AvatarFallback>B</AvatarFallback>
-                      </Avatar>
-                      <div className="rounded-lg px-3 py-2 bg-muted">
-                        <div className="flex space-x-1">
-                          <div className="h-2 w-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:0ms]"></div>
-                          <div className="h-2 w-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:150ms]"></div>
-                          <div className="h-2 w-2 bg-foreground/40 rounded-full animate-bounce [animation-delay:300ms]"></div>
-                        </div>
+                    <motion.div
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      className="max-w-[85%] rounded-lg p-3 bg-muted"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Avatar className="h-6 w-6">
+                          <Bot className="h-4 w-4" />
+                        </Avatar>
+                        <span className="text-xs font-medium">CityFix Bot</span>
                       </div>
-                    </div>
+                      <div className="flex items-center gap-1 h-6">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </motion.div>
                   </div>
                 )}
-                
-                {suggestedActions.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {suggestedActions.map((action, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSuggestedAction(action.action)}
-                        className="flex items-center gap-1"
-                      >
-                        {action.action.includes('help') && <HelpCircle className="h-3 w-3" />}
-                        {action.action.includes('report') && <AlertCircle className="h-3 w-3" />}
-                        {action.action.includes('navigate') && <Sparkles className="h-3 w-3" />}
-                        {action.label}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
               </div>
-            </CardContent>
-            
-            <CardFooter className="border-t p-3">
-              <form 
-                className="flex w-full gap-2" 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                }}
-              >
+            </ScrollArea>
+
+            {/* Chat input */}
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
                 <Input
                   ref={inputRef}
+                  placeholder="Type a message..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Type your message..."
+                  onKeyDown={handleKeyDown}
                   className="flex-1"
                 />
-                <Button 
-                  type="submit" 
-                  size="icon"
-                  disabled={!inputValue.trim() || isProcessing}
-                >
+                <Button onClick={handleSendMessage} disabled={!inputValue.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
-              </form>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
+              </div>
+              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                <HelpCircle className="h-3 w-3" />
+                <span>Type "help" to see available commands</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
