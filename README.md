@@ -1,73 +1,63 @@
-# Welcome to your Lovable project
+# 🏙️ Smart City Management System with AI-Enhanced Reporting
 
-## Project info
+A full-stack AI-powered web application that enables citizens to report urban infrastructure problems (like potholes, water leaks, and malfunctioning street lights) with image uploads and live location. The system uses AI to classify and prioritize issues for city workers via a real-time admin dashboard.
 
-**URL**: https://lovable.dev/projects/fd3b82f4-4a71-4dbf-8b26-ad7ca7bbcbc7
+---
 
-## How can I edit this code?
+## 🚀 Features
 
-There are several ways of editing your application.
+### 📲 Citizen Interface
+- **Issue Reporting with Image Upload**
+- **Live Geolocation Detection**
+- **Emergency Button** for instant critical alerts
 
-**Use Lovable**
+### 🤖 AI-Enhanced Issue Triage
+- **spam protection -can not report from the same location 
+- **Auto Priority Suggestion** (High / Medium / Low)
+- **Smart Classification** using AI models (ChatGPT Vision / Simulated)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fd3b82f4-4a71-4dbf-8b26-ad7ca7bbcbc7) and start prompting.
+### 🛠️ Admin Dashboard
+- **Interactive Map** using Leaflet.js with custom priority markers
+- **Live Feed of Reports** with filters and statuses
 
-Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
+### 💬 Floating Chatbot
+- **Report via Text** (e.g., "Pothole on MG Road")
+- **Check Report Status**
+- **Admin Commands** (Mark done, Show open reports, etc.)
+- **FAQs + Help Suggestions**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## ⚙️ Tech Stack
 
-Follow these steps:
+- **Frontend:** TypeScript, Next.js, Tailwind CSS
+- **Database:** MongoDB Atlas (in progress), Local Mock Data (current)
+- **AI Tools Used:** ChatGPT, deepseek, Lovable ai 
+- **Map Integration:** Leaflet.js, 
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🔧 Current Status
 
-# Step 3: Install the necessary dependencies.
-npm i
+- ✅ Core functionality (reporting, AI triage, dashboard) complete
+- ⚠️ MongoDB integration under development (currently using mock data)
+- 🚧 Admin authentication via localStorage (to be enhanced)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 💡 Future Enhancements
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- 🔐 Secure backend with real MongoDB connectivity
+- 🗣️ Add Whisper API for voice-to-text reporting
+- 🕶️ AR View for issue overlays (via mobile camera)
+- 📱 Mobile app version using React Native / Flutter
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📦 Setup Instructions
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/fd3b82f4-4a71-4dbf-8b26-ad7ca7bbcbc7) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Clone the repository  
+   ```bash
+   git clone https://github.com/Pankajmonde/city-ai-report-hub.git
+   cd city-ai-report-hub
