@@ -55,9 +55,3 @@ A full-stack AI-powered web application that enables citizens to report urban in
 
 ---
 
-## 📦 Setup Instructions
-
-1. Clone the repository  
-   ```bash
-   git clone https://github.com/Pankajmonde/city-ai-report-hub.git
-   cd city-ai-report-hub
