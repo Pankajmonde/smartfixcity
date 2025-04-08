@@ -14,7 +14,8 @@ export const useAdminAuth = () => {
       setIsAdmin(isAuthenticated);
       setIsLoading(false);
       
-      if (!isAuthenticated) {
+      // Only redirect to admin login if trying to access admin route
+      if (!isAuthenticated && window.location.pathname === '/admin') {
         navigate('/admin-login');
       }
     };
