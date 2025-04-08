@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Upload, Camera } from 'lucide-react';
+import { X, Camera } from 'lucide-react';
 
 interface ImageUploadProps {
   onImagesSelected: (files: File[]) => void;
@@ -19,30 +20,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [selectedImages, setSelectedImages] = useState<File[]>(existingImages);
   const [previews, setPreviews] = useState<string[]>(previewUrls);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const filesArray = Array.from(event.target.files);
-      const newFiles = [...selectedImages, ...filesArray].slice(0, maxImages);
-      
-      setSelectedImages(newFiles);
-      onImagesSelected(newFiles);
-      
-      // Generate previews
-      const newPreviews = newFiles.map(file => {
-        // If it's already in our previews, keep the existing URL
-        const existingPreviewIndex = selectedImages.findIndex(existing => existing.name === file.name);
-        if (existingPreviewIndex >= 0 && existingPreviewIndex < previews.length) {
-          return previews[existingPreviewIndex];
-        }
-        // Otherwise create a new preview URL
-        return URL.createObjectURL(file);
-      });
-      
-      setPreviews(newPreviews);
-    }
-  };
 
   const handleRemoveImage = (index: number) => {
     const newImages = [...selectedImages];
@@ -56,12 +33,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const newPreviews = [...previews];
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
-  };
-
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
   };
 
   const takePicture = async () => {
@@ -147,44 +118,22 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         ))}
         
         {selectedImages.length < maxImages && (
-          <div className="flex gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon" 
-              className="w-24 h-24 border-dashed flex flex-col items-center justify-center gap-1"
-              onClick={handleUploadClick}
-            >
-              <Upload size={20} />
-              <span className="text-xs">Upload</span>
-            </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon" 
-              className="w-24 h-24 border-dashed flex flex-col items-center justify-center gap-1"
-              onClick={takePicture}
-            >
-              <Camera size={20} />
-              <span className="text-xs">Camera</span>
-            </Button>
-          </div>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="icon" 
+            className="w-24 h-24 border-dashed flex flex-col items-center justify-center gap-1"
+            onClick={takePicture}
+          >
+            <Camera size={20} />
+            <span className="text-xs">Camera</span>
+          </Button>
         )}
       </div>
       
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*"
-        multiple={selectedImages.length < maxImages - 1}
-        onChange={handleFileChange}
-      />
-      
       <p className="text-xs text-muted-foreground">
         {selectedImages.length === 0 
-          ? 'Upload or take photos of the issue (max 3 images)' 
+          ? 'Take photos of the issue (max 3 images)' 
           : `${selectedImages.length} of ${maxImages} images selected`}
       </p>
     </div>
