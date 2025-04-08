@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import MapPage from "./pages/MapPage";
-import DashboardPage from "./pages/DashboardPage";
 import ReportPage from "./pages/ReportPage";
 import ReportDetailPage from "./pages/ReportDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
@@ -26,7 +25,6 @@ const App = () => (
           {/* Public routes - accessible without authentication */}
           <Route path="/" element={<Index />} />
           <Route path="/map" element={<MapPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/report/:id" element={<ReportDetailPage />} />
           

@@ -13,7 +13,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { AlertTriangle, Menu, Map, LayoutDashboard, Plus, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Menu, Map, Plus, ShieldAlert } from 'lucide-react';
 import EmergencyButton from './EmergencyButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -56,12 +56,6 @@ const NavBar = ({ onEmergencyClick }: NavBarProps) => {
         </div>
         
         <div className="hidden md:flex items-center space-x-1">
-          <Link to="/dashboard">
-            <Button variant={isActive('/dashboard') ? 'secondary' : 'ghost'} size="sm">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Dashboard
-            </Button>
-          </Link>
           <Link to="/map">
             <Button variant={isActive('/map') ? 'secondary' : 'ghost'} size="sm">
               <Map className="h-4 w-4 mr-2" />
@@ -110,12 +104,6 @@ const NavBar = ({ onEmergencyClick }: NavBarProps) => {
                 </SheetTrigger>
                 <SheetContent side="left">
                   <div className="px-2 py-6 flex flex-col gap-4">
-                    <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                      <Button variant={isActive('/dashboard') ? 'secondary' : 'ghost'} className="w-full justify-start">
-                        <LayoutDashboard className="h-4 w-4 mr-2" />
-                        Dashboard
-                      </Button>
-                    </Link>
                     <Link to="/map" onClick={() => setIsOpen(false)}>
                       <Button variant={isActive('/map') ? 'secondary' : 'ghost'} className="w-full justify-start">
                         <Map className="h-4 w-4 mr-2" />
