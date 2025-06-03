@@ -1,4 +1,4 @@
-# 🏙️ Smart City Management System with AI-Enhanced Reporting
+# 🏙️ Smart City Management System with AI-Enhanced Reporting   (6 hours hackthon project)
 
 A full-stack AI-powered web application that enables citizens to report urban infrastructure problems (like potholes, water leaks, and malfunctioning street lights) with image uploads and live location. The system uses AI to classify and prioritize issues for city workers via a real-time admin dashboard.
 
