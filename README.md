@@ -54,4 +54,8 @@ A full-stack AI-powered web application that enables citizens to report urban in
 - 📱 Mobile app version using React Native / Flutter
 
 ---
+![smartcityfix Homepage](public/images/smartcityfix1.png)
+![ Homepage](public/images/smartcityfix2.png)
+![Admin Dashboard](public/images/smartcityfix3.png)
+![Emgergency report ](public/images/smartcityfix5.png)
 
